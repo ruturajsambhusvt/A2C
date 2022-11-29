@@ -46,7 +46,6 @@ class Agent(object):
         self.episode_reward = 0
         
     def policy_evalulation(self):
-        # print('... evaluating policy ...')
         
         for i in range(self.mem_steps):
             if self.done:
@@ -66,7 +65,7 @@ class Agent(object):
             if self.done:
                 self.episode_reward_store.append(self.episode_reward)
                 if len(self.episode_reward_store)%10==0:
-                    print('Episode: ', len(self.episode_reward_store), 'Average Reward: ', self.episode_reward)
+                    print('Episode: ', len(self.episode_reward_store), 'Episode Reward: ', self.episode_reward)
                     
         return 
 
@@ -74,7 +73,6 @@ class Agent(object):
             
         
     def policy_update(self):
-        # print('... learning ...')
         
         states, actions, rewards, next_states, dones = self.memory.process_memory(self.gamma)
         
@@ -122,8 +120,17 @@ class Agent(object):
                 self.save_models()
         self.env.close()
         return self.episode_reward_store
-
         
+
+    def save_models(self):
+        print('... saving models ...')
+        self.actor.save_checkpoint()
+        self.critic.save_checkpoint()
+        
+    def load_models(self):
+        print('... loading models ...')
+        self.actor.load_checkpoint()
+        self.critic.load_checkpoint()
         
         
     # def learn(self, state, action, reward, next_state, done):
@@ -153,15 +160,6 @@ class Agent(object):
     #     self.actor.optimizer.step()
     #     self.critic.optimizer.step()
         
-    def save_models(self):
-        print('... saving models ...')
-        self.actor.save_checkpoint()
-        self.critic.save_checkpoint()
-        
-    def load_models(self):
-        print('... loading models ...')
-        self.actor.load_checkpoint()
-        self.critic.load_checkpoint()
     
         
         

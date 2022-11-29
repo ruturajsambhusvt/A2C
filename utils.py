@@ -5,7 +5,7 @@ import os
 import time
 import datetime
 
-def plotLearning(scores, filename, x=None, window=5):   
+def plotLearning(scores, title, filename, x=None, window=5):   
     N = len(scores)
     running_avg = np.empty(N)
     for t in range(N):
@@ -13,9 +13,12 @@ def plotLearning(scores, filename, x=None, window=5):
 
     if x is None:
         x = [i for i in range(N)]
-    plt.ylabel('Score')       
-    plt.xlabel('Game')                     
-    plt.plot(x, running_avg)
+    plt.ylabel('Rewards')       
+    plt.xlabel('Episodes')     
+    plt.plot(x, scores,label='Score')                
+    plt.plot(x, running_avg,label='Running Average')
+    plt.legend()
+    plt.title(title)
     plt.savefig(filename)
     plt.show()
 

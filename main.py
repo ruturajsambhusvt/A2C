@@ -16,42 +16,31 @@ if __name__=='__main__':
     # env = gym.make('InvertedPendulumBulletEnv-v0')
     # env = gym.make('InvertedDoublePendulumBulletEnv-v0')
     # env = gym.make('CartPoleContinuousBulletEnv-v0')
-    # env = gym.make('MinitaurBulletEnv-v0')
+    env = gym.make('MinitaurBulletEnv-v0')
     # env = gym.make('Walker2DBulletEnv-v0')
-    env = gym.make('Pendulum-v1')
+    # env = gym.make('Pendulum-v1')
     
     
-    agent = Agent(env=env,alpha=0.0004,beta=0.004,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
+    agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
     path = '/Results/'+env.spec.id
     if not os.path.exists(os.getcwd()+path):
         os.makedirs(os.getcwd()+path)
     
-    np.random.seed(0)#sensitive learning
+    # np.random.seed(0)  #sensitive learning
 
     # writer = write_data('/Results/bulletInvertedPendulum')
     # writer = write_data('/Results/bulletDoubleInvertedPendulum')
     # writer = write_data('/Results/MinitaurBulletEnv-v0')
     writer = write_data(path+'/'+env.spec.id)
     
-
-    
-    # n_games = 500
-    # episode_length = agent.env._max_episode_steps
-    # total_steps = (n_games*episode_length)//agent.mem_steps
-    # print(episode_length)
-    
-    
-    # filename = 'double_inverted_pendulum.png'
-    # filename = 'Walker2DBulletEnv.png'
-    
     # uncomment this line and do a mkdir tmp && mkdir video if you want to
     # record video of the agent playing the game.
     #env = wrappers.Monitor(env, 'tmp/video', video_callable=lambda episode_id: True, force=True)
     
     figure_file = env.spec.id+ 'plot.png'
+    title = env.spec.id
     
     best_score = env.reward_range[0]
-    score_history = []
     load_checkpoint = False
     
     if load_checkpoint:
@@ -59,17 +48,15 @@ if __name__=='__main__':
         env.render(mode='human')
        
     
-    rewards = agent.learn(total_steps=5000)
+    score_history = agent.learn(total_steps=5000)
+    #5000 steps for gym pendulum
+    #10000 steps for bullet env InvertedPendulum
+    #10000 steps for bullet env InvertedDoublePendulum
+    #5000 steps for bullet env MinitaurBulletEnv-v0
         
-    average_rewards = [np.mean(rewards[i:i+50]) for i in range(len(rewards))]
-    y = np.arange(0, len(average_rewards))
-
-    x = np.arange(0, len(rewards))
-
-    fig, ax = plt.subplots()
-    ax.plot(x, rewards)
-    ax.plot(y, average_rewards)
-    plt.show()
+    average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
+    
+    plotLearning(score_history, title, figure_file, window=10)
         
         
         

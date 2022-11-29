@@ -44,11 +44,9 @@ class CriticNetwork(nn.Module):
     
     
     def save_checkpoint(self):
-        print('... saving checkpoint ...')
         torch.save(self.state_dict(), self.checkpt_file)
         
     def load_checkpoint(self):
-        print('... loading checkpoint ...')
         self.load_state_dict(torch.load(self.checkpt_file))
         
         
@@ -115,11 +113,9 @@ class ActorNetwork(nn.Module):
     
     
     def save_checkpoint(self):
-        print('... saving checkpoint ...')
         torch.save(self.state_dict(), self.checkpt_file)
     
     def load_checkpoint(self):
-        print('... loading checkpoint ...')
         self.load_state_dict(torch.load(self.checkpt_file))
         
         
