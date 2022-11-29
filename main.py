@@ -21,7 +21,7 @@ if __name__=='__main__':
     env = gym.make('Pendulum-v1')
     
     
-    agent = Agent(env=env,alpha=0.0004,beta=0.004,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.99,mem_steps=32, algo='A2C')
+    agent = Agent(env=env,alpha=0.0004,beta=0.004,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
     path = '/Results/'+env.spec.id
     if not os.path.exists(os.getcwd()+path):
         os.makedirs(os.getcwd()+path)
@@ -35,9 +35,10 @@ if __name__=='__main__':
     
 
     
-    n_games = 100
-    episode_length = agent.env._max_episode_steps
-    total_steps = (n_games*episode_length)//agent.mem_steps
+    # n_games = 500
+    # episode_length = agent.env._max_episode_steps
+    # total_steps = (n_games*episode_length)//agent.mem_steps
+    # print(episode_length)
     
     
     # filename = 'double_inverted_pendulum.png'
@@ -46,7 +47,6 @@ if __name__=='__main__':
     # uncomment this line and do a mkdir tmp && mkdir video if you want to
     # record video of the agent playing the game.
     #env = wrappers.Monitor(env, 'tmp/video', video_callable=lambda episode_id: True, force=True)
-    
     
     figure_file = env.spec.id+ 'plot.png'
     
@@ -58,13 +58,10 @@ if __name__=='__main__':
         agent.load_models()
         env.render(mode='human')
        
-    for i in range(n_games):
-        agent.policy_eval()
-        agent.learn()
+    
+    rewards = agent.learn(total_steps=5000)
         
-        
-    rewards = agent.episode_reward_store
-    average_rewards = [np.mean(rewards[i:i+10]) for i in range(len(rewards))]
+    average_rewards = [np.mean(rewards[i:i+50]) for i in range(len(rewards))]
     y = np.arange(0, len(average_rewards))
 
     x = np.arange(0, len(rewards))
@@ -72,6 +69,7 @@ if __name__=='__main__':
     fig, ax = plt.subplots()
     ax.plot(x, rewards)
     ax.plot(y, average_rewards)
+    plt.show()
         
         
         

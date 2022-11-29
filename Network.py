@@ -94,16 +94,21 @@ class ActorNetwork(nn.Module):
     
         return torch.distributions.Normal(mu, sigma)
     
-    def sample_normal_dist(self,state):
-        mu, sigma = self.forward(state)
-        policy = distributions.Normal(mu, sigma)
-        action_probs = policy.sample()
+    def sample_action(self,state):
+        
+        policy = self.forward(torch.tensor(np.array(state), dtype=torch.float32).to(self.device))
+        action = policy.sample().detach().cpu().numpy().flatten()
+        
+        # mu, sigma = self.forward(state)
+        # policy = distributions.Normal(mu, sigma)
+        # action_probs = policy.sample()
         
         #using tanh to limit the action to [-1,1] and multiply by max_action
-        action = torch.tanh(action_probs)*torch.tensor(self.max_action).to(self.device)
-        log_probs = policy.log_prob(action_probs).to(self.device)
+        # action = torch.tanh(action_probs)*torch.tensor(self.max_action).to(self.device)
+        # log_probs = policy.log_prob(action_probs).to(self.device)
+
         
-        return action, log_probs
+        return action
     
     def gradient_norm_clip(self,max_norm=0.5):
         torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm)

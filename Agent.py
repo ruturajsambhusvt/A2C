@@ -29,46 +29,52 @@ class Agent(object):
         self.episode_reward_store  = []
         self.algo = algo
         self.max_grad_norm = max_grad_norm
+    
         
         self.memory = Memory(self.algo)
         self.actor = ActorNetwork(alpha=alpha, input_dim=self.state_dim, action_dim= self.action_dim, max_action= self.env.action_space.high,fc1_size= self.layer1_actor, fc2_size= self.layer2_actor, name = 'Actor'+ self.env_name)
         self.critic = CriticNetwork(beta=beta, input_dim= self.state_dim, fc1_size= self.layer1_critic, fc2_size= self.layer2_critic, name =  'Critic' + self.env_name)
         
-    def choose_action(self,state):
-        with torch.no_grad():
-            state = torch.tensor(np.array([state]),dtype=torch.float32).to(self.actor.device)
-            action , self.log_probs = self.actor.sample_normal_dist(state)
-            return action.detach().cpu().numpy().flatten()
+    # def choose_action(self,state):
+    #     with torch.no_grad():
+    #         state = torch.tensor(np.array([state]),dtype=torch.float32).to(self.actor.device)
+    #         action , self.log_probs = self.actor.sample_normal_dist(state)
+    #         return action.detach().cpu().numpy().flatten()
+    def reset(self):
+        self.state = self.env.reset()
+        self.done = False
+        self.episode_reward = 0
         
-    def policy_eval(self):
-        print('... evaluating policy ...')
-        done = False
-        state = self.env.reset()
+    def policy_evalulation(self):
+        # print('... evaluating policy ...')
+        
         for i in range(self.mem_steps):
+            if self.done:
+                self.reset()
             
-            dists = self.actor(torch.tensor(np.array(state),dtype=torch.float32).to(self.actor.device))
-            actions = dists.sample().detach().cpu().numpy().flatten()
+            # dists = self.actor(torch.tensor(np.array(self.state),dtype=torch.float32).to(self.actor.device))
+            # actions = dists.sample().detach().cpu().numpy().flatten()
+            actions = self.actor.sample_action(self.state)
             clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
             
-            next_state, reward, done, info = self.env.step(clipped_actions)
-            self.memory.remember(state, actions, reward, next_state, done)
-            state = next_state
+            next_state, reward, self.done, info = self.env.step(clipped_actions)
+            self.memory.remember(self.state, actions, reward, next_state, self.done)
+            self.state = next_state
             self.steps+=1
             self.episode_reward+=reward
-            
-            
-            if done:
+
+            if self.done:
                 self.episode_reward_store.append(self.episode_reward)
                 if len(self.episode_reward_store)%10==0:
-                    print('Episode: ', len(self.episode_reward_store), 'Average Reward: ', np.mean(self.episode_reward_store[:-10]))
-                self.episode_reward = 0
-                state = self.env.reset()
-                done = False
+                    print('Episode: ', len(self.episode_reward_store), 'Average Reward: ', self.episode_reward)
+                    
+        return 
+
                 
             
         
-    def learn(self):
-        print('... learning ...')
+    def policy_update(self):
+        # print('... learning ...')
         
         states, actions, rewards, next_states, dones = self.memory.process_memory(self.gamma)
         
@@ -99,7 +105,6 @@ class Agent(object):
         
         self.actor.optimizer.step()
         
-        # print(td_target)
         #critic loss
         critic_loss  = F.mse_loss(td_target, value)
         self.critic.optimizer.zero_grad()
@@ -108,6 +113,15 @@ class Agent(object):
         self.critic.gradient_norm_clip(self.max_grad_norm)
         
         self.critic.optimizer.step()
+        
+    def learn(self,total_steps):
+        for i in range(total_steps):
+            self.policy_evalulation()
+            self.policy_update()
+            if i%1000==0:
+                self.save_models()
+        self.env.close()
+        return self.episode_reward_store
 
         
         
