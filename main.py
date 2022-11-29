@@ -5,6 +5,12 @@ from utils import plotLearning,write_data
 import numpy as np
 from gym import wrappers
 import os
+import torch
+import torch.nn as nn
+from torch import distributions
+import torch.nn.functional as F
+import torch.optim as optim
+import matplotlib.pyplot as plt
 
 if __name__=='__main__':
     # env = gym.make('InvertedPendulumBulletEnv-v0')
@@ -29,8 +35,10 @@ if __name__=='__main__':
     
 
     
-    n_games = 1000
-    episode_length = 
+    n_games = 100
+    episode_length = agent.env._max_episode_steps
+    total_steps = (n_games*episode_length)//agent.mem_steps
+    
     
     # filename = 'double_inverted_pendulum.png'
     # filename = 'Walker2DBulletEnv.png'
@@ -51,32 +59,53 @@ if __name__=='__main__':
         env.render(mode='human')
        
     for i in range(n_games):
+        agent.policy_eval()
+        agent.learn()
         
-        observation = env.reset()
-        # env.render(mode='human')
-        done = False
-        score = 0
-        while not done:
-            action = agent.choose_action(observation)
-            new_observation, reward, done, info = env.step(action)
-            score += reward
-            if not load_checkpoint:
-                agent.learn(observation, action, reward, new_observation, done)
-            observation = new_observation
-        score_history.append(score)
-        avg_score = np.mean(score_history[-100:])
         
-        if avg_score > best_score:
-            best_score = avg_score
-            if not load_checkpoint:
-                agent.save_models()
+    rewards = agent.episode_reward_store
+    average_rewards = [np.mean(rewards[i:i+10]) for i in range(len(rewards))]
+    y = np.arange(0, len(average_rewards))
+
+    x = np.arange(0, len(rewards))
+
+    fig, ax = plt.subplots()
+    ax.plot(x, rewards)
+    ax.plot(y, average_rewards)
+        
+        
+        
+        
+        
+        
+    #     observation = env.reset()
+    #     # env.render(mode='human')
+    #     done = False
+    #     score = 0
+    #     for i in range(agent.mem_steps)
+    #     while not done:
+    #         action = agent.choose_action(observation)
+    #         new_observation, reward, done, info = env.step(action)
+    #         score += reward
+    #         if not load_checkpoint:
+    #             agent.learn(observation, action, reward, new_observation, done)
+    #         observation = new_observation
+    #     score_history.append(score)
+    #     avg_score = np.mean(score_history[-100:])
+        
+    #     if avg_score > best_score:
+    #         best_score = avg_score
+    #         if not load_checkpoint:
+    #             agent.save_models()
                 
-        print('episode ', i, 'score %.2f' % score, 'average score %.2f' % avg_score)
+    #     print('episode ', i, 'score %.2f' % score, 'average score %.2f' % avg_score)
         
-        if not load_checkpoint:
-                writer.write(i,score,avg_score)
+    #     if not load_checkpoint:
+    #             writer.write(i,score,avg_score)
         
         
-    if not load_checkpoint:
-        x = [i+1 for i in range(n_games)]
-        plotLearning(score_history, figure_file, window=100)
+    # if not load_checkpoint:
+    #     x = [i+1 for i in range(n_games)]
+    #     plotLearning(score_history, figure_file, window=100)
+        
+        

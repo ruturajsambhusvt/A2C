@@ -2,12 +2,13 @@ import numpy as np
 
 
 class Memory(object):
-    def __init__(self) -> None:
+    def __init__(self,algo) -> None:
         self.state = []
         self.action = []
         self.new_state = []
         self.reward = []
         self.done = []
+        self.algo = algo
 
     def remember(self, state, action, reward, new_state, done):
         self.state.append(state)
@@ -15,6 +16,7 @@ class Memory(object):
         self.reward.append(reward)
         self.new_state.append(new_state)
         self.done.append(done)
+        
 
     def recall(self):
         return np.array(self.state), np.array(self.action), np.array(self.reward), np.array(self.new_state), np.array(self.done)
@@ -36,9 +38,9 @@ class Memory(object):
             discounted_rewards.append(running_ret)
         return discounted_rewards[::-1]
     
-    def process_memory(self,gamma=0.99, algo='REINFORCE'):
+    def process_memory(self,gamma=0.99):
         states, actions, rewards, new_states, dones = self.recall()
-        if algo == 'REINFORCE':
+        if self.algo == 'REINFORCE':
             rewards = self.discounted_rewards(rewards,dones,gamma)
         self.clear_memory()
         return states, actions, rewards, new_states, dones

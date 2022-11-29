@@ -41,38 +41,43 @@ class Agent(object):
             return action.detach().cpu().numpy().flatten()
         
     def policy_eval(self):
+        print('... evaluating policy ...')
         done = False
         state = self.env.reset()
         for i in range(self.mem_steps):
-            while not done:
-                dists = self.actor(torch.tensor(np.array(state),dtype=torch.float32).to(self.actor.device))
-                actions = dists.sample().detach().cpu().numpy().flatten()
-                clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
-                
-                next_state, reward, done, info = self.env.step(clipped_actions)
-                self.memory.remember(state, actions, reward, next_state, done)
-                state = next_state
-                self.steps+=1
-                self.episode_reward+=reward
-                
-                if done:
-                    self.episode_reward_store.append(self.episode_reward)
+            
+            dists = self.actor(torch.tensor(np.array(state),dtype=torch.float32).to(self.actor.device))
+            actions = dists.sample().detach().cpu().numpy().flatten()
+            clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
+            
+            next_state, reward, done, info = self.env.step(clipped_actions)
+            self.memory.remember(state, actions, reward, next_state, done)
+            state = next_state
+            self.steps+=1
+            self.episode_reward+=reward
+            
+            
+            if done:
+                self.episode_reward_store.append(self.episode_reward)
+                if len(self.episode_reward_store)%10==0:
                     print('Episode: ', len(self.episode_reward_store), 'Average Reward: ', np.mean(self.episode_reward_store[:-10]))
-                    self.episode_reward = 0
-                    state = self.env.reset()
-                    done = False
+                self.episode_reward = 0
+                state = self.env.reset()
+                done = False
                 
             
         
     def learn(self):
+        print('... learning ...')
         
         states, actions, rewards, next_states, dones = self.memory.process_memory(self.gamma)
         
         states = torch.tensor(np.array(states),dtype=torch.float32).to(self.actor.device)
         next_states = torch.tensor(np.array(next_states),dtype=torch.float32).to(self.actor.device)
-        rewards = torch.tensor(rewards,dtype=torch.float32).to(self.actor.device)
+        rewards = torch.tensor(rewards,dtype=torch.float32).to(self.actor.device).view(-1,1)
         actions = torch.tensor(actions,dtype=torch.float32).to(self.actor.device)
-        dones = torch.tensor(dones,dtype=torch.bool).to(self.actor.device)
+        dones = torch.tensor(dones,dtype=torch.float32).to(self.actor.device).view(-1,1)
+        
         
         if self.algo == 'REINFORCE':
             td_target = rewards
@@ -94,7 +99,7 @@ class Agent(object):
         
         self.actor.optimizer.step()
         
-        
+        # print(td_target)
         #critic loss
         critic_loss  = F.mse_loss(td_target, value)
         self.critic.optimizer.zero_grad()
@@ -103,6 +108,8 @@ class Agent(object):
         self.critic.gradient_norm_clip(self.max_grad_norm)
         
         self.critic.optimizer.step()
+
+        
         
         
     # def learn(self, state, action, reward, next_state, done):
