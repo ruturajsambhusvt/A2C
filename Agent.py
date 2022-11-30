@@ -6,6 +6,8 @@ from torch import distributions
 import numpy as np
 from Network import ActorNetwork, CriticNetwork
 from memory import Memory
+from utils import write_data, plotLearning
+import os
 
 class Agent(object):
     def __init__(self,env,alpha,beta,layer1_critic=256,layer2_critic=256,layer1_actor=256,layer2_actor=256, gamma=0.99,mem_steps=32,algo='REINFORCE',max_grad_norm=0.5) -> None:
@@ -29,6 +31,7 @@ class Agent(object):
         self.episode_reward_store  = []
         self.algo = algo
         self.max_grad_norm = max_grad_norm
+        self.writer = write_data(os.path.join(os.getcwd(),'/Results/'+env.spec.id+'/'+env.spec.id+'_'+algo))
     
         
         self.memory = Memory(self.algo)
@@ -64,9 +67,10 @@ class Agent(object):
 
             if self.done:
                 self.episode_reward_store.append(self.episode_reward)
+                self.writer.write(len(self.episode_reward_store),self.episode_reward, np.mean(self.episode_reward_store[-10:]))
                 if len(self.episode_reward_store)%10==0:
-                    print('Episode: ', len(self.episode_reward_store), 'Episode Reward: ', self.episode_reward)
-                    
+                    print('Episode: ', len(self.episode_reward_store), 'Average Episode Reward: ', np.mean(self.episode_reward_store[-10:]))
+                       
         return 
 
                 

@@ -16,9 +16,9 @@ if __name__=='__main__':
     # env = gym.make('InvertedPendulumBulletEnv-v0')
     # env = gym.make('InvertedDoublePendulumBulletEnv-v0')
     # env = gym.make('CartPoleContinuousBulletEnv-v0')
-    env = gym.make('MinitaurBulletEnv-v0')
+    # env = gym.make('MinitaurBulletEnv-v0')
     # env = gym.make('Walker2DBulletEnv-v0')
-    # env = gym.make('Pendulum-v1')
+    env = gym.make('Pendulum-v1')
     
     
     agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
@@ -31,7 +31,7 @@ if __name__=='__main__':
     # writer = write_data('/Results/bulletInvertedPendulum')
     # writer = write_data('/Results/bulletDoubleInvertedPendulum')
     # writer = write_data('/Results/MinitaurBulletEnv-v0')
-    writer = write_data(path+'/'+env.spec.id)
+    # writer = write_data(path+'/'+env.spec.id)
     
     # uncomment this line and do a mkdir tmp && mkdir video if you want to
     # record video of the agent playing the game.
