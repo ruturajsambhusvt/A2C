@@ -17,14 +17,17 @@ if __name__=='__main__':
     # env = gym.make('InvertedDoublePendulumBulletEnv-v0')
     # env = gym.make('CartPoleContinuousBulletEnv-v0')
     # env = gym.make('MinitaurBulletEnv-v0')
-    # env = gym.make('Walker2DBulletEnv-v0')
-    env = gym.make('Pendulum-v1')
-    
-    
-    agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
+    env = gym.make('Walker2DBulletEnv-v0')
+    # env = gym.make("MountainCarContinuous-v0")
+    # env = gym.make('Pendulum-v1')
     path = '/Results/'+env.spec.id
     if not os.path.exists(os.getcwd()+path):
         os.makedirs(os.getcwd()+path)
+    
+    
+    agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
+    
+    
     
     # np.random.seed(0)  #sensitive learning
 
@@ -48,12 +51,15 @@ if __name__=='__main__':
         env.render(mode='human')
        
     
-    score_history = agent.learn(total_steps=5000)
+    score_history = agent.learn(total_steps=10000)
     #5000 steps for gym pendulum
     #10000 steps for bullet env InvertedPendulum
-    #10000 steps for bullet env InvertedDoublePendulum
+    #2500 steps for bullet env InvertedDoublePendulum
     #5000 steps for bullet env MinitaurBulletEnv-v0
-        
+    #5000 steps for bullet env ContinuousCartPole
+    # 20000 steps for bullet env MountainCarContinuous
+    #10000 steps for bullet env Walker2DBulletEnv-v0
+    
     average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
     
     plotLearning(score_history, title, figure_file, window=10)

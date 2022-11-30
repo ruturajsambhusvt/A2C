@@ -15,8 +15,8 @@ def plotLearning(scores, title, filename, x=None, window=5):
         x = [i for i in range(N)]
     plt.ylabel('Rewards')       
     plt.xlabel('Episodes')     
-    plt.plot(x, scores,label='Score')                
-    plt.plot(x, running_avg,label='Running Average')
+    plt.plot(x, scores,label='Score',linewidth=0.5)              
+    plt.plot(x, running_avg,label='Running Average',linewidth=2)
     plt.legend()
     plt.title(title)
     plt.savefig(filename)
