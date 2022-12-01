@@ -17,15 +17,15 @@ if __name__=='__main__':
     # env = gym.make('InvertedDoublePendulumBulletEnv-v0')
     # env = gym.make('CartPoleContinuousBulletEnv-v0')
     # env = gym.make('MinitaurBulletEnv-v0')
-    env = gym.make('Walker2DBulletEnv-v0')
+    # env = gym.make('Walker2DBulletEnv-v0')
     # env = gym.make("MountainCarContinuous-v0")
-    # env = gym.make('Pendulum-v1')
+    env = gym.make('Pendulum-v1')
     path = '/Results/'+env.spec.id
     if not os.path.exists(os.getcwd()+path):
         os.makedirs(os.getcwd()+path)
     
     
-    agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=64,layer2_critic=64,layer1_actor=64,layer2_actor=64, gamma=0.95,mem_steps=32, algo='A2C')
+    agent = Agent(env=env,alpha=0.0005,beta=0.005,layer1_critic=128,layer2_critic=128,layer1_actor=128,layer2_actor=128, gamma=0.95,mem_steps=64, algo='REINFORCE',max_grad_norm=0.5)
     
     
     
@@ -40,7 +40,7 @@ if __name__=='__main__':
     # record video of the agent playing the game.
     #env = wrappers.Monitor(env, 'tmp/video', video_callable=lambda episode_id: True, force=True)
     
-    figure_file = env.spec.id+ 'plot.png'
+    figure_file = env.spec.id+agent.algo+'plot.png'
     title = env.spec.id
     
     best_score = env.reward_range[0]
@@ -52,13 +52,13 @@ if __name__=='__main__':
        
     
     score_history = agent.learn(total_steps=10000)
-    #5000 steps for gym pendulum
-    #10000 steps for bullet env InvertedPendulum
-    #2500 steps for bullet env InvertedDoublePendulum
+    #5000 steps for gym pendulum A2C and 10000 RF
+    #10000 steps for bullet env InvertedPendulum and 20000 RF
+    #2500 steps for bullet env InvertedDoublePendulum and 2500 for RF
     #5000 steps for bullet env MinitaurBulletEnv-v0
-    #5000 steps for bullet env ContinuousCartPole
-    # 20000 steps for bullet env MountainCarContinuous
-    #10000 steps for bullet env Walker2DBulletEnv-v0
+    #5000 steps for bullet env ContinuousCartPole and 5000 for RF
+    # 20000 steps for bullet env MountainCarContinuous AND 15000 for RF
+    #10000 steps for bullet env Walker2DBulletEnv-v0 and 7500 for RF
     
     average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
     
