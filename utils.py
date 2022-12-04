@@ -5,7 +5,16 @@ import os
 import time
 import datetime
 
-def plotLearning(scores, title, filename, x=None, window=5):   
+def plotLearning(scores, title, filename, x=None, window=5):  
+    """plot the scores and running averages, taken from: Phil machine learning coursec youtube channel
+
+    Args:
+        scores (_type_): _description_
+        title (_type_): _description_
+        filename (_type_): _description_
+        x (_type_, optional): _description_. Defaults to None.
+        window (int, optional): _description_. Defaults to 5.
+    """     
     N = len(scores)
     running_avg = np.empty(N)
     for t in range(N):
@@ -23,11 +32,11 @@ def plotLearning(scores, title, filename, x=None, window=5):
     plt.show()
 
 class write_data():
+    """class to write data to csv file
+    """    
 
     def __init__(self,name,fieldnames=None) -> None:
-    #    self.episode = episode
-    #    self.score = score
-    #    self.score_avg = score_avg
+                    
        self.name = name+str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))+".csv"
        if fieldnames is not None:
            self.fieldnames = fieldnames
@@ -40,6 +49,13 @@ class write_data():
            
        
     def write(self,episode,score,score_avg):
+        """write data to csv file
+
+        Args:
+            episode (float): episode number
+            score (float): score of episode
+            score_avg (float): score average of previous 10 episodes
+        """        
         with open(os.path.join(os.getcwd()+str(self.name)), 'a') as file:
             writer = csv.DictWriter(file,fieldnames=self.fieldnames)
             info = {"episode": episode,"score":score,"score_avg":score_avg}

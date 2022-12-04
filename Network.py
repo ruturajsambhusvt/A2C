@@ -9,7 +9,17 @@ import numpy as np
 
 class CriticNetwork(nn.Module):
     def __init__(self, beta, input_dim, fc1_size = 256, fc2_size = 256, name='Critic', checkpt_dir = 'tmp/a2c') -> None:
-        super(CriticNetwork, self).__init__()
+        """This is the definition of Critic Network which represents the state valuues
+
+        Args:
+            beta (float): learning rate
+            input_dim (np array): observation space
+            fc1_size (int, optional): number of nuerons in layer 1. Defaults to 256.
+            fc2_size (int, optional): number of neurons in layer 2. Defaults to 256.
+            name (str, optional): name to be saved. Defaults to 'Critic'.
+            checkpt_dir (str, optional): directory where check points are saved. Defaults to 'tmp/a2c'.
+        """        
+        super(CriticNetwork, self).__init__() #initialize the nn.Module class
 
         self.beta = beta
         self.input_dim = input_dim
@@ -31,6 +41,14 @@ class CriticNetwork(nn.Module):
         
     
     def forward(self, state):
+        """forawrd pass of the network
+
+        Args:
+            state (np array): observations
+
+        Returns:
+            np array with single value: value of the state
+        """        
         value = self.fc1(state)
         value = F.relu(value)
         value = self.fc2(value)
@@ -40,18 +58,40 @@ class CriticNetwork(nn.Module):
         return value
     
     def gradient_norm_clip(self,max_norm=0.5):
+        """gradient clipping to avoid exploding gradients
+
+        Args:
+            max_norm (float, optional): max value. Defaults to 0.5.
+        """        
         torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm)
     
     
     def save_checkpoint(self):
+        """saving checkpoints
+        """        
         torch.save(self.state_dict(), self.checkpt_file)
         
     def load_checkpoint(self):
+        """loading checkpoints
+        """        
         self.load_state_dict(torch.load(self.checkpt_file))
         
         
 class ActorNetwork(nn.Module):
     def __init__(self, alpha, input_dim, action_dim, max_action, fc1_size = 256, fc2_size = 256, name='Actor', checkpt_dir = 'tmp/a2c') -> None:
+        """This is the definition of Actor Network which represents the policy
+
+        Args:
+            alpha (float): Actor learning rate
+            input_dim (np array): observation space dim
+            action_dim (np array): action space dimension
+            max_action (float): max action value permitted
+            fc1_size (int, optional): number of neurons in layer 1  . Defaults to 256.
+            fc2_size (int, optional): number of nuerons in layer 2. Defaults to 256.
+            name (str, optional): name to be saved. Defaults to 'Actor'.
+            checkpt_dir (str, optional): directory where network is saved. Defaults to 'tmp/a2c'.
+        """        
+        
         super(ActorNetwork,self).__init__()
         self.alpha = alpha
         self.input_dim = input_dim
@@ -67,7 +107,7 @@ class ActorNetwork(nn.Module):
         self.fc1 = nn.Linear(*self.input_dim, self.fc1_size)
         self.fc2 = nn.Linear(self.fc1_size, self.fc2_size)
         self.mu = nn.Linear(self.fc2_size, self.action_dim)
-        # self.sigma = nn.Linear(self.fc2_size, self.action_dim)
+        #  logstd parameterization of the standard deviation
         logstds_param = nn.Parameter(torch.full((self.action_dim,),0.1))
         self.register_parameter('logstds',logstds_param)
         
@@ -77,45 +117,55 @@ class ActorNetwork(nn.Module):
         self.to(self.device)
         
     def forward(self, state):
+        """forward pass of the network
+
+        Args:
+            state (np array): observations
+
+        Returns:
+            torch distribution: normal distribution of the actions
+        """        
         prob = self.fc1(state)
         prob = F.relu(prob)
         prob = self.fc2(prob)
         prob = F.relu(prob)
-        
         mu = self.mu(prob)
-        # sigma = self.sigma(prob)
+        # clamp the mean to avoid numerical instability
         sigma = torch.clamp(self.logstds.exp(), min=1e-3, max=50)
-        
-        
-        # sigma = torch.clamp(sigma, min=1e-6, max=1) # To avoid sigma = 0 
-        # can try max = 1 to limit variance
-    
         return torch.distributions.Normal(mu, sigma)
     
     def sample_action(self,state):
+        """sample action from the policy
+
+        Args:
+            state (np array): observations
+
+        Returns:
+            np array: action
+        """        
         
         policy = self.forward(torch.tensor(np.array(state), dtype=torch.float32).to(self.device))
-        action = policy.sample().detach().cpu().numpy().flatten()
-        
-        # mu, sigma = self.forward(state)
-        # policy = distributions.Normal(mu, sigma)
-        # action_probs = policy.sample()
-        
-        #using tanh to limit the action to [-1,1] and multiply by max_action
-        # action = torch.tanh(action_probs)*torch.tensor(self.max_action).to(self.device)
-        # log_probs = policy.log_prob(action_probs).to(self.device)
-
-        
+        action = policy.sample().detach().cpu().numpy().flatten() # detach the action from the graph
+       
         return action
     
     def gradient_norm_clip(self,max_norm=0.5):
+        """gradient clipping to avoid exploding gradients
+
+        Args:
+            max_norm (float, optional): max value. Defaults to 0.5.
+        """        
         torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm)
     
     
     def save_checkpoint(self):
+        """saving checkpoints
+        """        
         torch.save(self.state_dict(), self.checkpt_file)
     
     def load_checkpoint(self):
+        """loading checkpoints
+        """
         self.load_state_dict(torch.load(self.checkpt_file))
         
         

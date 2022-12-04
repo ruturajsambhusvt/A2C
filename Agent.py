@@ -10,7 +10,27 @@ from utils import write_data, plotLearning
 import os
 
 class Agent(object):
+    """Agent is an object which performs evaluation and update of the policy
+
+    Args:
+        object (_type_): _description_
+    """    
     def __init__(self,env,alpha,beta,layer1_critic=256,layer2_critic=256,layer1_actor=256,layer2_actor=256, gamma=0.99,mem_steps=32,algo='REINFORCE',max_grad_norm=0.5) -> None:
+        """constructor for Agent class
+
+        Args:
+            env (gym env): gym environment
+            alpha (float): actor learning rate
+            beta (float): critic learning rate
+            layer1_critic (int, optional): _description_. Defaults to 256.
+            layer2_critic (int, optional): _description_. Defaults to 256.
+            layer1_actor (int, optional): _description_. Defaults to 256.
+            layer2_actor (int, optional): _description_. Defaults to 256.
+            gamma (float, optional): discount factor. Defaults to 0.99.
+            mem_steps (int, optional): number of evaluation steps. Defaults to 32.
+            algo (str, optional): 'A2C' or 'REINFORCE'. Defaults to 'REINFORCE'.
+            max_grad_norm (float, optional): gradient clipped value. Defaults to 0.5.
+        """        
         self.env = env
         self.alpha = alpha
         self.beta = beta
@@ -38,24 +58,22 @@ class Agent(object):
         self.actor = ActorNetwork(alpha=alpha, input_dim=self.state_dim, action_dim= self.action_dim, max_action= self.env.action_space.high,fc1_size= self.layer1_actor, fc2_size= self.layer2_actor, name = 'Actor'+ self.env_name)
         self.critic = CriticNetwork(beta=beta, input_dim= self.state_dim, fc1_size= self.layer1_critic, fc2_size= self.layer2_critic, name =  'Critic' + self.env_name)
         
-    # def choose_action(self,state):
-    #     with torch.no_grad():
-    #         state = torch.tensor(np.array([state]),dtype=torch.float32).to(self.actor.device)
-    #         action , self.log_probs = self.actor.sample_normal_dist(state)
-    #         return action.detach().cpu().numpy().flatten()
     def reset(self):
+        """helper function to reset the environment object of the agent
+        """        
         self.state = self.env.reset()
         self.done = False
         self.episode_reward = 0
         
     def policy_evalulation(self):
+        """plays the game for a fixed number of steps and stores the experience in the memory
+           idea from https://github.com/hermesdt/reinforcement-learning/tree/master/a2c
+        """        
         
         for i in range(self.mem_steps):
             if self.done:
                 self.reset()
-            
-            # dists = self.actor(torch.tensor(np.array(self.state),dtype=torch.float32).to(self.actor.device))
-            # actions = dists.sample().detach().cpu().numpy().flatten()
+
             actions = self.actor.sample_action(self.state)
             clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
             
@@ -72,14 +90,15 @@ class Agent(object):
                     print('Episode: ', len(self.episode_reward_store), 'Average Episode Reward: ', np.mean(self.episode_reward_store[-10:]))
                        
         return 
-
-                
-            
         
     def policy_update(self):
+        """performs the policy update based on stored experience
+        idea from https://github.com/hermesdt/reinforcement-learning/tree/master/a2c
+        """        
         
         states, actions, rewards, next_states, dones = self.memory.process_memory(self.gamma)
         
+        #convert to pytorch tensors
         states = torch.tensor(np.array(states),dtype=torch.float32).to(self.actor.device)
         next_states = torch.tensor(np.array(next_states),dtype=torch.float32).to(self.actor.device)
         rewards = torch.tensor(rewards,dtype=torch.float32).to(self.actor.device).view(-1,1)
@@ -88,16 +107,16 @@ class Agent(object):
         
         
         if self.algo == 'REINFORCE':
-            td_target = rewards
+            td_target = rewards #REINFORCE expects td_target = rewards
         else:
-            td_target = rewards + self.gamma * self.critic(next_states) * (1-dones)
+            td_target = rewards + self.gamma * self.critic(next_states) * (1-dones) #A2C td_target = rewards + gamma*V(s')
         value = self.critic(states)
-        advantage = td_target - value
+        advantage = td_target - value #advantage = td_target - V(s)
         
         #actor loss
         policies = self.actor(states)
         log_probs = policies.log_prob(actions)
-        entropy = policies.entropy().mean()
+        # entropy = policies.entropy().mean() # can try adding entropy to the loss
         
         actor_loss = -(log_probs * advantage).mean()
         self.actor.optimizer.zero_grad()
@@ -117,6 +136,14 @@ class Agent(object):
         self.critic.optimizer.step()
         
     def learn(self,total_steps):
+        """learns the policy for a fixed number of steps
+
+        Args:
+            total_steps (int): number of policy updates to perform
+
+        Returns:
+            list: reward history
+        """        
         for i in range(total_steps):
             self.policy_evalulation()
             self.policy_update()
@@ -127,42 +154,19 @@ class Agent(object):
         
 
     def save_models(self):
+        """save the actor and critic networks
+        """        
         print('... saving models ...')
         self.actor.save_checkpoint()
         self.critic.save_checkpoint()
         
     def load_models(self):
+        """load the actor and critic networks
+        """        
         print('... loading models ...')
         self.actor.load_checkpoint()
         self.critic.load_checkpoint()
         
-        
-    # def learn(self, state, action, reward, next_state, done):
-        
-    #     state = torch.tensor(np.array([state]),dtype=torch.float32).to(self.actor.device)
-    #     next_state = torch.tensor(np.array([next_state]),dtype=torch.float32).to(self.actor.device)
-    #     reward = torch.tensor(reward,dtype=torch.float32).to(self.actor.device)
-    #     action = torch.tensor(action,dtype=torch.float32).to(self.actor.device)
-    #     done = torch.tensor(done,dtype=torch.bool).to(self.actor.device)
-        
-        
-    #     self.actor.optimizer.zero_grad()
-    #     self.critic.optimizer.zero_grad()
-        
-    #     next_critic = self.critic.forward(next_state)
-    #     critic = self.critic.forward(state)
-        
-    #     #TD error for the critic
-    #     delta = reward + self.gamma*next_critic*(1-int(done)) - critic
-    #     critic_loss = delta**2
-        
-    #     #Loss for the actor network
-    #     actor_loss = -self.log_probs*delta
-        
-    #     (actor_loss + critic_loss).backward()
-        
-    #     self.actor.optimizer.step()
-    #     self.critic.optimizer.step()
         
     
         
