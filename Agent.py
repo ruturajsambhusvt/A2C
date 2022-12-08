@@ -42,6 +42,7 @@ class Agent(object):
         self.action_dim = self.env.action_space.shape[0]
         self.state_dim = self.env.observation_space.shape
         self.env_name = self.env.unwrapped.spec.id
+        self.best_score = self.env.reward_range[0]
         
         self.mem_steps = mem_steps
         self.state = None
@@ -52,7 +53,7 @@ class Agent(object):
         self.algo = algo
         self.max_grad_norm = max_grad_norm
         self.writer = write_data(os.path.join(os.getcwd(),'/Results/'+env.spec.id+'/'+env.spec.id+'_'+algo))
-    
+        
         
         self.memory = Memory(self.algo)
         self.actor = ActorNetwork(alpha=alpha, input_dim=self.state_dim, action_dim= self.action_dim, max_action= self.env.action_space.high,fc1_size= self.layer1_actor, fc2_size= self.layer2_actor, name = 'Actor'+ self.env_name)
@@ -147,11 +148,45 @@ class Agent(object):
         for i in range(total_steps):
             self.policy_evalulation()
             self.policy_update()
-            if i%1000==0:
+            # if i%1000==0:
+            #     self.save_models()
+            if np.mean(self.episode_reward_store[-10:])> self.best_score:
+                self.best_score = np.mean(self.episode_reward_store[-10:])
                 self.save_models()
         self.env.close()
         return self.episode_reward_store
+    
+    def evaluate(self,total_steps=5000):
+        """evaluates the policy for a fixed number of episodes
+
+        Args:
+            render (bool, optional): whether to render the environment. Defaults to False.
+
+        Returns:
+            list: reward history
         
+        """        
+             
+        for i in range(total_steps):
+            if self.done:
+                self.reset()
+
+            actions = self.actor.sample_action(self.state)
+            clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
+            
+            next_state, reward, self.done, info = self.env.step(clipped_actions)
+            self.memory.remember(self.state, actions, reward, next_state, self.done)
+            self.state = next_state
+            self.steps+=1
+            self.episode_reward+=reward
+
+            if self.done:
+                self.episode_reward_store.append(self.episode_reward)
+                self.writer.write(len(self.episode_reward_store),self.episode_reward, np.mean(self.episode_reward_store[-10:]))
+                if len(self.episode_reward_store)%10==0:
+                    print('Episode: ', len(self.episode_reward_store), 'Average Episode Reward: ', np.mean(self.episode_reward_store[-10:]))
+        
+        return self.episode_reward_store
 
     def save_models(self):
         """save the actor and critic networks
