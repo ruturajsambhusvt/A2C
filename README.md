@@ -39,11 +39,20 @@ REINFORCE
 
 
 
+Evaluation of Learnt Agent
+For Pendulum-v1, please follow the following steps, run these commands from different terminals
 
-  #5000 steps for gym pendulum A2C and 10000 RF
-    #10000 steps for bullet env InvertedPendulum and 20000 RF
-    #2500 steps for bullet env InvertedDoublePendulum and 2500 for RF
-    #5000 steps for bullet env MinitaurBulletEnv-v0
-    #5000 steps for bullet env ContinuousCartPole and 7500 for RF
-    # 20000 steps for bullet env MountainCarContinuous AND 15000 for RF
-    #10000 steps for bullet env Walker2DBulletEnv-v0 and 7500 for RF
+1) First run the following command and wait until learning is finished, it will show a plot.
+
+python main.py --env Pendulum-v1 --algo A2C --mem_steps 32 --learning_steps 5000
+
+2) Open a new terminal and run the following to give rewards for 250 episodes of the learned policy
+
+python main.py --env Pendulum-v1 --algo A2C --mem_steps 32 --learning_steps 5000 --learn 0 --random 0
+#learned policy evaluation
+
+3) Open a new terminal and run the following to give rewards for 250 episodes of the random policy
+
+python main.py --env Pendulum-v1 --algo A2C --mem_steps 32 --learning_steps 5000 --learn 0 --random 1
+#random policy evaluation
+
