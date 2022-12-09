@@ -20,7 +20,7 @@ parser.add_argument('--algo', type=str, help='algorithm - REINFORCE or A2C',defa
 parser.add_argument('--mem_steps', type=int,  help='number of evaluation steps',default=32) #default=32,
 parser.add_argument('--learning_steps', type=int,  help='total number of policy update steps',default=5000) #default=5000,
 parser.add_argument('--learn', type=int,  help='learn or evaluate',default=1) #default=True,
-
+parser.add_argument('--random', type=int,  help='render or not',default=0) #default=False,
 args = parser.parse_args()
 
 # torch.manual_seed(0)
@@ -44,13 +44,22 @@ if __name__=='__main__':
        
     if args.learn:
         score_history = agent.learn(total_steps=args.learning_steps)
+        average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
+        plotLearning(score_history, title, figure_file, window=10)
+        
+    elif args.random:
+        score_history = agent.evaluate_random(total_steps=50000)
+        average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
+        plotLearning(score_history, title, figure_file, window=10)
     
     else:
         agent.load_models()
-        score_history = agent.evaluate(total_steps=5000)
+        score_history = agent.evaluate(total_steps=50000)
+        average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
+        plotLearning(score_history, title, figure_file, window=10)
     
-    average_rewards = [np.mean(score_history[i:i+10]) for i in range(len(score_history))]
     
-    plotLearning(score_history, title, figure_file, window=10)
+
+    
         
         
