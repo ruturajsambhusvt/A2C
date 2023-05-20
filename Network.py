@@ -170,7 +170,7 @@ class ActorNetwork(nn.Module):
         
         
 class CriticNetworkLSTM(nn.Module):
-    def __init__(self, beta, input_dim, fc1_size = 256, fc2_size = 256, name='Critic', checkpt_dir = 'tmp/a2c') -> None:
+    def __init__(self, beta, input_dim, fc1_size = 256, fc2_size = 256, hidden_size = 64, name='Critic', checkpt_dir = 'tmp/a2c') -> None:
         """This is the definition of Critic Network which represents the state valuues
 
         Args:
@@ -187,9 +187,14 @@ class CriticNetworkLSTM(nn.Module):
         self.input_dim = input_dim
         self.fc1_size = fc1_size
         self.fc2_size = fc2_size
+        self.hidden_size = hidden_size
+        self.num_hidden_layer = 1
         self.name = name
         self.checkpt_dir = checkpt_dir
         self.checkpt_file = os.path.join(self.checkpt_dir, name+'_a2c')
+        
+        #Define lstm layer
+        self.lstm = nn.LSTM
         
         # Define the layers
         self.fc1 = nn.Linear(*self.input_dim, self.fc1_size)
@@ -241,7 +246,7 @@ class CriticNetworkLSTM(nn.Module):
 
 
 class ActorNetworkLSTM(nn.Module):
-    def __init__(self, alpha, input_dim, action_dim, max_action, fc1_size = 256, fc2_size = 256, name='Actor', checkpt_dir = 'tmp/a2c') -> None:
+    def __init__(self, alpha, input_dim, action_dim, max_action, fc1_size = 256, fc2_size = 256, hidden_size = 64, name='Actor', checkpt_dir = 'tmp/a2c') -> None:
         """This is the definition of Actor Network which represents the policy
 
         Args:
@@ -262,6 +267,8 @@ class ActorNetworkLSTM(nn.Module):
         self.max_action = max_action
         self.fc1_size = fc1_size
         self.fc2_size = fc2_size
+        self.hidden_size = hidden_size
+        self.num_hidden_layer = 1
         self.name = name
         self.checkpt_dir = checkpt_dir
         self.checkpt_file = os.path.join(self.checkpt_dir, name+'_a2c')
