@@ -56,3 +56,9 @@ python main.py --env Pendulum-v1 --algo A2C --mem_steps 32 --learning_steps 5000
 python main.py --env Pendulum-v1 --algo A2C --mem_steps 32 --learning_steps 5000 --learn 0 --random 1
 #random policy evaluation
 
+
+
+References and Credits-
+-This code structure is learnt from https://www.youtube.com/@MachineLearningwithPhil, highly recommended to learn to code RL algorithms from scratch.
+-The way to calculate the discounted rewards, advantage values and loss functions for A2C and REINFORCE is heavily inspired from https://github.com/hermesdt/reinforcement-learning/tree/master/a2c
+
